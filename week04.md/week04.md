@@ -5,11 +5,11 @@ from io import BytesIO
 
 pygame.init()
 
-# 창 설정
+# ====== 창 설정 ======
 screen = pygame.display.set_mode((800, 600))
-pygame.display.set_caption("Multiple Collision Detection with Fast Rotation")
+pygame.display.set_caption("Collision Detection with Image Size")
 
-# 색상
+# ====== 색상 ======
 BLACK = (0, 0, 0)
 YELLOW = (255, 255, 0)
 RED = (255, 0, 0)
@@ -17,10 +17,10 @@ BLUE = (0, 150, 255)
 GREEN = (0, 255, 0)
 WHITE = (255, 255, 255)
 
-# 글꼴
+# ====== 글꼴 ======
 font = pygame.font.SysFont(None, 30)
 
-# Base64 스프라이트
+# ====== Base64 스프라이트 로드 ======
 sprite_base64 = (
     "iVBORw0KGgoAAAANSUhEUgAAAEYAAABGCAYAAABxLuKEAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFn"
     "ZVJlYWR5ccllPAAAAyFpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/"
@@ -53,19 +53,21 @@ sprite_base64 = (
     "V8j/dtA0LUMpNdiJe01zgBnOXFVKMdtdTxuEKcHwO1dKj1HmK9n4LcAAwvdMMLRYaKIAAAAASUVORK5C"
     "YII="
 )
-
 sprite_data = base64.b64decode(sprite_base64)
 sprite_image = pygame.image.load(BytesIO(sprite_data)).convert_alpha()
 
-# 플레이어와 고정 오브젝트
-player = pygame.Rect(100, 100, 100, 80)
-fixed = pygame.Rect(0, 0, 120, 90)
+# ====== 플레이어와 고정 오브젝트 생성 ======
+player_sprite = pygame.transform.scale(sprite_image, (100, 80))
+fixed_sprite_original = pygame.transform.scale(sprite_image, (120, 90))
+
+player_width, player_height = player_sprite.get_size()
+fixed_width, fixed_height = fixed_sprite_original.get_size()
+
+player = pygame.Rect(100, 100, player_width, player_height)
+fixed = pygame.Rect(0, 0, fixed_width, fixed_height)
 fixed.center = (400, 300)
 
-player_sprite = pygame.transform.scale(sprite_image, (player.width, player.height))
-fixed_sprite_original = pygame.transform.scale(sprite_image, (fixed.width, fixed.height))
-
-# 회전 변수
+# ====== 회전 변수 ======
 rotation_speed = 1       # 기본 속도
 fast_rotation_speed = 5  # Z키 누르면 빨라짐
 fixed_angle = 0
@@ -103,8 +105,8 @@ while running:
     # 중심 좌표
     player_center = player.center
     fixed_center = fixed.center
-    player_radius = player.width // 2
-    fixed_radius = fixed.width // 2
+    player_radius = max(player_width, player_height) // 2
+    fixed_radius = max(fixed_width, fixed_height) // 2
 
     # ======== 충돌 감지 ========
     # 1. 원형 충돌
@@ -115,7 +117,7 @@ while running:
     # 2. AABB 충돌
     aabb_collision = player.colliderect(rotated_rect)
 
-    # 3. OBB 충돌 (간단 근사)
+    # 3. OBB 충돌 (근사)
     obb_points = [
         rotated_rect.topleft,
         rotated_rect.topright,
@@ -132,11 +134,11 @@ while running:
     screen.blit(rotated_fixed_sprite, rotated_rect.topleft)
 
     # 디버깅용
-    pygame.draw.rect(screen, RED, player, 2)                  # 플레이어 AABB
-    pygame.draw.circle(screen, BLUE, player_center, player_radius, 2)  # 원형
-    pygame.draw.rect(screen, RED, rotated_rect, 2)           # 회전 이미지 AABB
-    pygame.draw.circle(screen, BLUE, fixed_center, fixed_radius, 2)    # 원형
-    pygame.draw.polygon(screen, GREEN, obb_points, 2)        # OBB
+    pygame.draw.rect(screen, RED, player, 2)                      # 플레이어 AABB
+    pygame.draw.circle(screen, BLUE, player_center, player_radius, 2)  # 플레이어 원형
+    pygame.draw.rect(screen, RED, rotated_rect, 2)               # 회전 이미지 AABB
+    pygame.draw.circle(screen, BLUE, fixed_center, fixed_radius, 2)    # 고정 원형
+    pygame.draw.polygon(screen, GREEN, obb_points, 2)            # OBB
 
     # 화면 왼쪽 상단 충돌 결과
     status_texts = [
